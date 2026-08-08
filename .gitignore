@@ -1,0 +1,36 @@
+# Basketball_51 dataset — large binary video files, not tracked
+Basketball_51/
+Basketball_51 dataset/
+
+# MMAction2 submodule has its own gitignore
+mmaction2_repo/
+
+# Generated annotation files
+data/basketball51/*.txt
+
+# Training outputs
+work_dirs/
+*.log
+*.pth
+*.pth.*
+*.cui
+*.pyc
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+*.egg
+*.whl
+*.egg-info
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
