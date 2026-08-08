@@ -2,8 +2,8 @@
 Basketball_51/
 Basketball_51 dataset/
 
-# MMAction2 submodule has its own gitignore
-mmaction2_repo/
+# MMAction2 submodule has its own gitignore — tracked as submodule
+# mmaction2_repo/  # removed — submodule must not be ignored
 
 # Generated annotation files
 data/basketball51/*.txt
