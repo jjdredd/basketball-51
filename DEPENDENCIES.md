@@ -8,7 +8,8 @@
 | torchvision | 0.28.0+ | Image/video transforms |
 | mmcv-lite | >=2.0.0rc4, <2.2.0 | OpenMMLab computer vision tools |
 | mmengine | >=0.3.0 | OpenMMLab training engine |
-| mmaction2 | 1.2.0 | Action recognition toolkit |
+| mmaction2 (pip) | 1.2.0 | Action recognition toolkit (trimmed) |
+| mmaction (submodule) | 1.2.0 | Full package (includes localizers) |
 | decord | 0.6.0 | Video decoding |
 
 ## Installation Steps
@@ -54,10 +55,35 @@ pip install "mmcv-lite>=2.0.0rc4,<2.2.0"
 pip install mmaction2 decord
 ```
 
-### 6. Verify installation
+### 6. Install additional dependencies
 
 ```bash
-python3 -c "import torch; import decord; import mmcv; import mmaction; print('All imports OK'); print('mmcv version:', mmcv.__version__); print('mmaction version:', mmaction.__version__)"
+pip install importlib_metadata
+```
+
+This backport is required by the full `mmaction` package for dependency checks.
+
+### 7. Install full mmaction package (optional, for localizers / all modules)
+
+The pip-installed `mmaction2` 1.2.0 is a trimmed package missing some modules
+(e.g. `localizers`). If you need the full package — for example if training fails
+with `No module named 'mmaction.models.localizers.drn'` — install from the submodule:
+
+```bash
+# Remove the pip-installed trimmed version
+pip uninstall mmaction2 -y
+
+# Copy the submodule's mmaction package into the venv
+rm -rf venv/lib/python3.13/site-packages/mmaction*
+cp -r mmaction2/mmaction venv/lib/python3.13/site-packages/mmaction
+```
+
+Then ensure `importlib_metadata` is installed (step 6 above).
+
+### 8. Verify installation
+
+```bash
+python3 -c "import torch; import decord; import mmcv; import mmaction; print('All imports OK'); print('mmcv version:', mmcv.__version__); print('mmaction version:', mmaction.__version__); import mmaction.models.localizers; print('localizers OK')"
 ```
 
 Expected output:
@@ -66,6 +92,7 @@ Expected output:
 All imports OK
 mmcv version: 2.1.0
 mmaction version: 1.2.0
+localizers OK
 ```
 
 ## Version Compatibility Notes
@@ -77,7 +104,8 @@ mmaction version: 1.2.0
 | torchvision | 0.28.0+cpu |
 | mmcv-lite | 2.1.0 |
 | mmengine | 0.10.7 |
-| mmaction2 | 1.2.0 |
+| mmaction2 (pip) | 1.2.0 |
+| mmaction (submodule) | 1.2.0 |
 | decord | 0.6.0 |
 
 ## Troubleshooting

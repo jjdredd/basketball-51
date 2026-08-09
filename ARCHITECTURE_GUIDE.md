@@ -11,7 +11,8 @@ for **pure video-level action classification** — no spatial localization (no b
 and no temporal localization (no action boundaries). Each video produces a single
 8-class prediction. This avoids any modification to MMAction2's base architecture;
 the config at `configs/recognition/tsn/tsn_basketball51.py` inherits from the standard
-Kinetics-400 template and overrides only dataset-specific settings.
+Kinetics-400 template and overrides only dataset-specific settings. Training runs on
+GPU (`device = 'cuda:0'` in the config).
 
 ---
 
@@ -121,6 +122,7 @@ All pipelines are composed as ordered transform lists. The data flow is:
 - **Best for**: Short-range action recognition, simple temporal patterns
 - **Template**: `tsn_imagenet-pretrained-r50_8xb32-1x1x3-100e_kinetics400-rgb.py`
 - **Our choice**: Used as baseline for Basketball_51 (8 classes, ~10k videos)
+- **Device**: GPU via `device = 'cuda:0'` in config
 
 ### 4.2 TSM (Temporal Shift Module) — Config: `configs/recognition/tsm/`
 
@@ -228,15 +230,27 @@ Key modifications from Kinetics-400 template:
 | `milestones`         | [30, 60, 80]      | [20, 40]           | Shorter schedule |
 | `dataset_type`       | 'VideoDataset'    | 'VideoDataset'     | Same format |
 | `ann_file`           | kinetics400       | basketball51       | Custom annotations |
+| `device`             | — (CPU default)   | `'cuda:0'`          | GPU training |
 | `load_from`          | kinetics400 ckpt  | kinetics400 ckpt   | Transfer learning |
 
 ---
 
 ## 8. Evaluation
 
-MMAction2 uses `AccMetric` evaluator, which computes top-1 and top-5 accuracy.
-For Basketball_51 (8 classes), top-1 is the primary metric. Class-wise accuracy is
-recommended due to class imbalance.
+MMAction2 uses `AccMetric` evaluator. The Basketball_51 config is configured with
+`top_k_accuracy(topk=2)` — top-2 accuracy — and `mean_class_accuracy`. The evaluator
+is set via `metric_options` in the config:
+
+```python
+metric_options=dict(top_k_accuracy=dict(topk=2))
+```
+
+To change the top-k value, edit `metric_options` in `tsn_basketball51.py` or pass
+`--cfg-options` at test time:
+
+```bash
+--cfg-options test_evaluator.metric_options="dict(top_k_accuracy=dict(topk=3))"
+```
 
 ---
 
@@ -252,7 +266,29 @@ A Python automation script (`quick_start.py`) can:
 
 ---
 
-## 10. References
+## 10. PyTorch 2.6+ Checkpoint Compatibility
+
+Checkpoints saved by MMAction2 include `message_hub` with `HistoryBuffer` objects
+that are not safe for PyTorch 2.6's new default of `weights_only=True`. If loading
+fails with:
+
+```text
+WeightsUnpicklerError: GLOBAL mmengine.logging.history_buffer.HistoryBuffer
+```
+
+Use `fix_checkpoint.py` (in the project root) to strip non-tensor objects:
+
+```bash
+source venv/bin/activate
+python fix_checkpoint.py mmaction2/work_dirs/tsn_basketball51/<checkpoint>.pth
+```
+
+The fixed checkpoint loads with `weights_only=True` and contains only `state_dict`
+and `meta`.
+
+---
+
+## 11. References
 
 - MMAction2 docs: <https://github.com/open-mmlab/mmaction2>
 - Finetune guide: docs/en/user_guides/finetune.md

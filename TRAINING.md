@@ -94,7 +94,8 @@ It inherits from:
 ../../_base_/default_runtime.py      # runtime defaults
 ```
 
-Key Basketball_51 overrides: 8 classes, 50 epochs, LR 0.005, milestones [20, 40].
+Key Basketball_51 overrides: 8 classes, 50 epochs, LR 0.005, milestones [20, 40],
+GPU device (`device = 'cuda:0'`).
 
 To start training:
 
@@ -133,20 +134,36 @@ available in the work directory.
 
 ## Step 5: Test / evaluate
 
+**PyTorch 2.6+ note:** The checkpoint was saved with the old `weights_only=False` default.
+If loading fails with `WeightsUnpicklerError`, run the fix script first:
+
+```bash
+cd /home/agentslop/slop/mmaction/basketball51-project
+source venv/bin/activate
+python fix_checkpoint.py mmaction2/work_dirs/tsn_basketball51/<checkpoint>.pth
+```
+
+This strips non-tensor objects (`message_hub`) so the checkpoint loads with PyTorch 2.6's
+new default of `weights_only=True`. The fixed checkpoint is saved as `<checkpoint>_fixed.pth`.
+
 ```bash
 cd /home/agentslop/slop/mmaction/basketball51-project/mmaction2
 
 python3 tools/test.py configs/recognition/tsn/tsn_basketball51.py \
-    work_dirs/tsn_basketball51/best.pth \
-    --dump work_dirs/tsn_basketball51/results.pkl \
-    --eval top_k_accuracy 2
+    work_dirs/tsn_basketball51/best_acc_top1_epoch_41_fixed.pth \
+    --dump work_dirs/tsn_basketball51/results.pkl
 ```
 
-**Evaluation metrics:**
+**Evaluation metrics** (configured in `tsn_basketball51.py`):
 
-- `top_k_accuracy` — top-1 and top-2 accuracy
-- `mean_class_wise_accuracy` — per-class accuracy averaged
-- `confusion_matrix` — detailed class prediction matrix
+- `top_k_accuracy` — top-2 accuracy (`topk=2`)
+- `mean_class_accuracy` — per-class accuracy averaged
+
+To change top-k, edit the config's `metric_options` or pass `--cfg-options`:
+
+```bash
+--cfg-options test_evaluator.metric_options="dict(top_k_accuracy=dict(topk=3))"
+```
 
 ---
 
@@ -158,7 +175,7 @@ from mmaction.apis import init_recognizer, inference_recognizer
 # Load trained model
 model = init_recognizer(
     'configs/recognition/tsn/tsn_basketball51.py',
-    'work_dirs/tsn_basketball51/best.pth')
+    'work_dirs/tsn_basketball51/best_acc_top1_epoch_41_fixed.pth')
 
 # Predict a new video
 result = inference_recognizer(model, 'path/to/new_video.mp4')
@@ -173,6 +190,7 @@ print(f'Predicted class: {pred_class}')
 | Parameter | Default | Notes |
 | ----------- | --------- | ------- |
 | `batch_size` | 32 | Adjust for GPU memory (8 for 8GB, 32 for 24GB+) |
+| `device` | `'cuda:0'` | Set to `'cpu'` if no GPU available |
 | `max_epochs` | 50 | Increase for underfitting, decrease for overfitting |
 | `load_from` | Kinetics-400 ckpt | Change to a custom checkpoint or set to None for scratch |
 | `milestones` | [20, 40] | LR drop epochs — adjust for longer/shorter training |
