@@ -62,7 +62,7 @@ python3 -c "import torch; import decord; import mmcv; import mmaction; print('Al
 
 Expected output:
 
-```
+```text
 All imports OK
 mmcv version: 2.1.0
 mmaction version: 1.2.0

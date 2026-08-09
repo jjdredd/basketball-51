@@ -6,11 +6,18 @@ This document catalogs the MMAction2 codebase structure, config system, pipeline
 available architectures, and dataset preparation patterns — researched for training a custom
 8-class basketball action recognition model on the Basketball_51 dataset.
 
+**Key design choice:** The pipeline uses **TSN (Temporal Segment Network) with ResNet50**
+for **pure video-level action classification** — no spatial localization (no bounding boxes)
+and no temporal localization (no action boundaries). Each video produces a single
+8-class prediction. This avoids any modification to MMAction2's base architecture;
+the config at `configs/recognition/tsn/tsn_basketball51.py` inherits from the standard
+Kinetics-400 template and overrides only dataset-specific settings.
+
 ---
 
 ## 1. Codebase Layout
 
-```
+```text
 mmaction2_repo/
 ├── configs/              # All training configs (inheritance-based)
 │   ├── _base_/
@@ -76,7 +83,7 @@ and training schedule parameters.
 
 All pipelines are composed as ordered transform lists. The data flow is:
 
-```
+```text
 1. DecordInit     — Opens video file with Decord backend
 2. SampleFrames   — Samples frames for TSN: clip_len=1, interval=1, num_clips=3
 3. DecordDecode   — Decodes selected frames
@@ -174,13 +181,13 @@ Consider weighted sampling or class-balanced loss if training shows bias.
 
 MMAction2 `VideoDataset` expects a simple text file:
 
-```
+```text
 relative/path/to/video.mp4  <label_int>
 ```
 
 Example for Basketball_51:
 
-```
+```text
 2p0/2p0_v108_000437_x264.mp4 0
 2p1/2p1_v108_000340_x264.mp4 1
 3p0/3p0_v108_000001_x264.mp4 2
@@ -189,7 +196,7 @@ Example for Basketball_51:
 
 ### Directory Structure
 
-```
+```text
 data/basketball51/
 ├── videos_train/         # Training videos (80% split)
 │   ├── 2p0/              → class 0 videos
